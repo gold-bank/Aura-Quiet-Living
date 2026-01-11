@@ -33,17 +33,24 @@ const Hero: React.FC = () => {
   return (
     <section className="relative w-full h-screen min-h-[800px] overflow-hidden bg-[#D6D1C7]">
       
-      {/* Background Image - Serene Nature */}
+      {/* Background Video - Cinematic Foggy Forest */}
       <div className="absolute inset-0 w-full h-full">
-        <img 
-            src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2000" 
-            alt="Serene misty landscape" 
-            className="w-full h-full object-cover grayscale contrast-[0.7] brightness-[0.95] animate-[pulse_15s_ease-in-out_infinite_alternate]"
-        />
+        <video 
+          className="absolute inset-0 w-full h-full object-cover grayscale-[0.2] contrast-[0.9] brightness-[0.8]"
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          poster="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2000"
+        >
+          <source src="https://assets.mixkit.co/videos/47655/47655-720.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+        
         {/* Warmer Brown Overlay for Richness */}
-        <div className="absolute inset-0 bg-[#433E38]/40 mix-blend-multiply"></div>
+        <div className="absolute inset-0 bg-[#433E38]/30 mix-blend-multiply"></div>
         {/* Deep Sepia Tone for Shadow Depth */}
-        <div className="absolute inset-0 bg-[#313030]/20"></div>
+        <div className="absolute inset-0 bg-[#1a1918]/40"></div>
       </div>
 
       {/* Content */}

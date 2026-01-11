@@ -8,7 +8,7 @@ import { GoogleGenAI } from "@google/genai";
 import { PRODUCTS } from '../constants';
 
 const getSystemInstruction = () => {
-  const productContext = PRODUCTS.map(p => 
+  const productContext = PRODUCTS.map(p =>
     `- ${p.name} ($${p.price}): ${p.description}. Features: ${p.features.join(', ')}`
   ).join('\n');
 
@@ -23,24 +23,24 @@ const getSystemInstruction = () => {
   If asked about products not in the list, gently steer them back to Aura products.`;
 };
 
-export const sendMessageToGemini = async (history: {role: string, text: string}[], newMessage: string): Promise<string> => {
+export const sendMessageToGemini = async (history: { role: string, text: string }[], newMessage: string): Promise<string> => {
   try {
-    let apiKey: string | undefined;
-    
-    // Robustly attempt to get the API key, handling ReferenceError if process is not defined
-    try {
-      apiKey = process.env.API_KEY;
-    } catch (e) {
-      // process is likely not defined in this environment
-      console.warn("Accessing process.env failed");
-    }
-    
+    // Robustly attempt to get the API key
+    // In Vite, environment variables must be prefixed with VITE_
+    // In AI Studio/some sandboxed environments, they might be in process.env or global variables
+    const apiKey =
+      ((import.meta as any).env?.VITE_GEMINI_API_KEY) ||
+      (typeof process !== 'undefined' ? process.env?.API_KEY : undefined) ||
+      (typeof process !== 'undefined' ? process.env?.VITE_GEMINI_API_KEY : undefined) ||
+      (window as any).GEMINI_API_KEY;
+
     if (!apiKey) {
-      return "I'm sorry, I cannot connect to the server right now. (Missing API Key)";
+      console.warn("Gemini API Key not found. Please set VITE_GEMINI_API_KEY in .env.local");
+      return "I'm sorry, I cannot connect to the concierge right now. (Missing API Key)";
     }
 
-    const ai = new GoogleGenAI({ apiKey });
-    
+    const ai = new GoogleGenAI(apiKey);
+
     const chat = ai.chats.create({
       model: 'gemini-2.5-flash',
       config: {

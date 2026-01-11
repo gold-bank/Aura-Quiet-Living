@@ -9,9 +9,8 @@ import { sendMessageToGemini } from '../services/geminiService';
 
 const Assistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'Welcome to Aura. I am here to help you find objects that resonate with your life. How may I assist?', timestamp: Date.now() }
-  ]);
+  const initialMessage: ChatMessage = { role: 'model', text: 'Welcome to Aura. I am here to help you find objects that resonate with your life. How may I assist?', timestamp: Date.now() };
+  const [messages, setMessages] = useState<ChatMessage[]>([initialMessage]);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -33,14 +32,18 @@ const Assistant: React.FC = () => {
     try {
       const history = messages.map(m => ({ role: m.role, text: m.text }));
       const responseText = await sendMessageToGemini(history, userMsg.text);
-      
+
       const aiMsg: ChatMessage = { role: 'model', text: responseText, timestamp: Date.now() };
       setMessages(prev => [...prev, aiMsg]);
     } catch (error) {
-        // Error handled in service
+      // Error handled in service
     } finally {
       setIsThinking(false);
     }
+  };
+
+  const clearChat = () => {
+    setMessages([initialMessage]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -57,54 +60,85 @@ const Assistant: React.FC = () => {
           {/* Header */}
           <div className="bg-[#EBE7DE] p-5 border-b border-[#D6D1C7] flex justify-between items-center">
             <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-[#2C2A26] rounded-full animate-pulse"></div>
-                <span className="font-serif italic text-[#2C2A26] text-lg">Concierge</span>
+              <div className="w-2 h-2 bg-[#2C2A26] rounded-full animate-pulse"></div>
+              <span className="font-serif italic text-[#2C2A26] text-lg">Concierge</span>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-[#A8A29E] hover:text-[#2C2A26] transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={clearChat}
+                className="text-xs uppercase tracking-widest text-[#A8A29E] hover:text-[#2C2A26] transition-colors"
+                title="Clear conversation"
+              >
+                Clear
+              </button>
+              <button onClick={() => setIsOpen(false)} className="text-[#A8A29E] hover:text-[#2C2A26] transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Chat Area */}
           <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-[#F5F2EB]" ref={scrollRef}>
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div 
-                  className={`max-w-[85%] p-5 text-sm leading-relaxed ${
-                    msg.role === 'user' 
-                      ? 'bg-[#2C2A26] text-[#F5F2EB]' 
+                <div
+                  className={`max-w-[85%] p-5 text-sm leading-relaxed ${msg.role === 'user'
+                      ? 'bg-[#2C2A26] text-[#F5F2EB]'
                       : 'bg-white border border-[#EBE7DE] text-[#5D5A53] shadow-sm'
-                  }`}
+                    }`}
                 >
                   {msg.text}
                 </div>
               </div>
             ))}
             {isThinking && (
-               <div className="flex justify-start">
-                 <div className="bg-white border border-[#EBE7DE] p-5 flex gap-1 items-center shadow-sm">
-                   <div className="w-1.5 h-1.5 bg-[#A8A29E] rounded-full animate-bounce"></div>
-                   <div className="w-1.5 h-1.5 bg-[#A8A29E] rounded-full animate-bounce delay-75"></div>
-                   <div className="w-1.5 h-1.5 bg-[#A8A29E] rounded-full animate-bounce delay-150"></div>
-                 </div>
-               </div>
+              <div className="flex justify-start">
+                <div className="bg-white border border-[#EBE7DE] p-5 flex gap-1 items-center shadow-sm">
+                  <div className="w-1.5 h-1.5 bg-[#A8A29E] rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-[#A8A29E] rounded-full animate-bounce delay-75"></div>
+                  <div className="w-1.5 h-1.5 bg-[#A8A29E] rounded-full animate-bounce delay-150"></div>
+                </div>
+              </div>
+            )}
+
+            {messages.length === 1 && !isThinking && (
+              <div className="pt-4 space-y-3">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#A8A29E] mb-2">Suggested</p>
+                {[
+                  "Tell me about Aura's philosophy",
+                  "What are your best products for sleep?",
+                  "Tell me about the Aura Harmony"
+                ].map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setInputValue(q);
+                      // Small timeout to allow input update if needed, though handleSend uses current input
+                      setTimeout(handleSend, 0);
+                    }}
+                    className="block w-full text-left p-4 bg-white border border-[#EBE7DE] text-sm text-[#5D5A53] hover:border-[#2C2A26] hover:text-[#2C2A26] transition-all"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
           {/* Input Area */}
           <div className="p-5 bg-[#F5F2EB] border-t border-[#D6D1C7]">
             <div className="flex gap-2 relative">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Ask anything..." 
+                placeholder="Ask anything..."
                 className="flex-1 bg-white border border-[#D6D1C7] focus:border-[#2C2A26] px-4 py-3 text-sm outline-none transition-colors placeholder-[#A8A29E] text-[#2C2A26]"
               />
-              <button 
+              <button
                 onClick={handleSend}
                 disabled={!inputValue.trim() || isThinking}
                 className="bg-[#2C2A26] text-[#F5F2EB] px-4 hover:bg-[#444] transition-colors disabled:opacity-50"
@@ -118,16 +152,16 @@ const Assistant: React.FC = () => {
         </div>
       )}
 
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="bg-[#2C2A26] text-[#F5F2EB] w-14 h-14 flex items-center justify-center rounded-full shadow-xl hover:scale-105 transition-all duration-500 z-50"
       >
         {isOpen ? (
-             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-             </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+          </svg>
         ) : (
-            <span className="font-serif italic text-lg">Ai</span>
+          <span className="font-serif italic text-lg">Ai</span>
         )}
       </button>
     </div>
